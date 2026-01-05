@@ -1,0 +1,272 @@
+body {
+    margin: 0;
+    background: #000; /* 余白対策の下地色 */
+}
+
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* ← ここ変更 */
+    padding-top: 60px; /* 上に余白を足す */
+    background-size: auto 100%; /* ← 縦を100%、横は自動 */
+    background-image: url("/images/background2.png");
+    background-repeat: repeat-y;
+    background-position: center top;
+}
+
+
+
+/* 情報カード（丸枠） */
+.info-card {
+    width: 90%;
+    max-width: 360px;
+    margin: 20px auto 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.first-card {
+    margin-top: 100px;
+}
+
+
+
+    .info-card h2 {
+        margin-bottom: 10px;
+        font-size: 18px;
+    }
+
+    .info-card p {
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+
+
+/* ボタン画像 */
+.image-button img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+
+/* アイドル画像 */
+.idol-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    margin-right: 130px;
+}
+
+/* アイドル写真 */
+.idol-photo {
+    width: 150%;
+    display: block;
+}
+
+
+
+/* ロゴ専用アニメーション */
+.fade-logo {
+    opacity: 0;
+    animation: logoFadeIn 1.8s ease forwards;
+    animation-delay: 0.8s;
+}
+
+@keyframes logoFadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+
+
+/* フェード＋浮き上がり */
+.fade-up {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 1.5s ease-out forwards;
+}
+
+@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ボタン */
+.button-area {
+    width: 90%;
+    max-width: 360px;
+}
+
+.image-button {
+    display: block;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+    .image-button img {
+        width: 60%;
+        max-width: 320px;
+        margin: 0 auto;
+        display: block;
+    }
+
+    .image-button:hover img,
+    .image-button:active img {
+        filter: brightness(1.15);
+    }
+
+    .image-button:active {
+        transform: scale(0.96);
+    }
+
+.title-logo {
+    position: absolute;
+    top: 90%;
+    left: 50%;
+    width: 150%;
+    margin-left: 70px;
+    height: auto;
+    display: block;
+    pointer-events: none;
+    z-index: 2;
+    transform-origin: center;
+    /* 初期 */
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    /* フェード → 左→右→中央で停止（1回だけ） */
+    animation: logoFadeIn 1.8s ease forwards, logoSwayOnce 1.4s ease-in-out forwards;
+    animation-delay: 0.8s, 2.0s;
+}
+
+@keyframes logoFadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+/* 左→右→中央（止まらない） */
+@keyframes logoSwayOnce {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    33% {
+        transform: translate(-50%, -50%) rotate(-2.5deg);
+    }
+
+    66% {
+        transform: translate(-50%, -50%) rotate(2.5deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+}
+
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    display: none; /* ← 初期は非表示 */
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0,0,0,0.65);
+    z-index: 9999;
+}
+
+    .modal-backdrop.show {
+        display: flex; /* ← show が付いたら表示 */
+    }
+
+.modal {
+    width: min(92vw, 360px);
+    background: rgba(255,255,255,0.92);
+    border-radius: 24px;
+    padding: 18px 16px;
+    text-align: center;
+}
+
+/* モーダル表示中はアニメ停止＆スクロール禁止 */
+body.modal-open {
+    overflow: hidden;
+}
+
+    /* モーダル表示中はアニメーションを止める */
+    body.modal-open .fade-up,
+    body.modal-open .title-logo {
+        animation-play-state: paused !important;
+    }
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+/* 共通ベース（サイズは持たせない） */
+.modal-image-btn {
+    display: inline-block;
+}
+
+    .modal-image-btn img {
+        width: 100%;
+        height: auto;
+        display: block;
+        max-width: none;
+    }
+
+    .modal-image-btn:active {
+        transform: scale(0.95);
+    }
+
+/* 個別サイズ指定 */
+.ok-btn {
+    width: 130px;
+}
+/* OKボタン */
+.off-btn {
+    width: 137px;
+}
+/* OFFボタン */
+
+/* ==== シェア＋BGMの並び（確定版） ==== */
+.share-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px; /* ← ここが距離。必ず効く */
+    margin-top: 24px;
+}
+
+    /* share-area 内の image-button はブロックをやめる */
+    .share-area .image-button {
+        display: inline-flex !important; /* ← blockを潰す（最重要） */
+        width: auto !important;
+    }
+
+        /* 画像は “指定した幅” を優先 */
+        .share-area .image-button img {
+            width: auto !important;
+            max-width: none !important;
+            margin: 0 !important; /* 0 auto を潰す */
+        }
+
+    /* 個別サイズ（ここで別々に調整） */
+    .share-area .share-btn img {
+        width: 170px !important;
+    }
+
+    .share-area .bgm-btn img {
+        width: 160px !important;
+    }
