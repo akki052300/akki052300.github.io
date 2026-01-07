@@ -270,3 +270,14 @@ body.modal-open {
     .share-area .bgm-btn img {
         width: 160px !important;
     }
+
+.game-btn img {
+    width: 140px; /* çDÇ› */
+    margin: 0 auto;
+}
+
+.panel .panel-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+

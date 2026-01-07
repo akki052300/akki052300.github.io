@@ -1,0 +1,772 @@
+﻿<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>マシ数あてミニゲーム</title>
+
+    <!-- 既存CSSを使いたい場合（任意） -->
+    <link rel="stylesheet" href="css/site.css" />
+
+    <style>
+        /* game専用の上書き（サイトCSSと競合しないようにスコープ強め） */
+        body {
+            margin: 0;
+            background: #000;
+        }
+
+        .game-wrap {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 12px 24px;
+            color: #fff;
+            box-sizing: border-box;
+        }
+
+        .hud {
+            width: min(94vw, 420px);
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 16px;
+            padding: 12px 12px;
+            box-sizing: border-box;
+        }
+
+        .hud-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+            .hud-row strong {
+                font-size: 14px;
+            }
+
+        .bar {
+            margin-top: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+            .bar > div {
+                height: 100%;
+                width: 100%;
+                background: rgba(255,255,255,0.9);
+                transform-origin: left center;
+                transform: scaleX(1);
+            }
+
+        /* 上半分：お題 */
+        .prompt-area {
+            width: min(94vw, 420px);
+            margin-top: 14px;
+            padding: 14px 12px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.10);
+            border: 1px solid rgba(255,255,255,0.18);
+            box-sizing: border-box;
+            min-height: 32vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .prompt-label {
+            font-size: 13px;
+            opacity: 0.9;
+            letter-spacing: 0.04em;
+        }
+
+        .prompt-text {
+            font-size: 22px;
+            line-height: 1.35;
+            word-break: break-word;
+            font-weight: 800;
+        }
+
+        .result {
+            min-height: 32px;
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+        }
+
+        /* 下半分：操作 */
+        .controls {
+            width: min(94vw, 420px);
+            margin-top: 14px;
+            padding: 14px 12px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.18);
+            box-sizing: border-box;
+        }
+
+        .count-board {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+            .count-board .cell {
+                background: rgba(0,0,0,0.25);
+                border: 1px solid rgba(255,255,255,0.14);
+                border-radius: 12px;
+                padding: 10px 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+                .count-board .cell b {
+                    font-size: 14px;
+                }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        .btn {
+            flex: 1 1 0;
+            max-width: 92px;
+            height: 56px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.22);
+            background: rgba(255,255,255,0.10);
+            color: #fff;
+            font-weight: 900;
+            font-size: 14px;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+            transition: transform 0.10s ease, filter 0.10s ease;
+        }
+
+            .btn:active {
+                transform: scale(0.96);
+                filter: brightness(1.10);
+            }
+
+        .btn-confirm {
+            margin-top: 12px;
+            width: 100%;
+            height: 80px;
+            border-radius: 18px;
+            border: 0;
+            background: rgba(255,255,255,0.92);
+            color: #000;
+            font-weight: 1000;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.10s ease, filter 0.10s ease;
+        }
+
+            .btn-confirm:active {
+                transform: scale(0.98);
+                filter: brightness(0.98);
+            }
+
+        .bottom-actions {
+            width: min(94vw, 420px);
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .link-btn {
+            flex: 1 1 0;
+            height: 44px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.20);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+            .link-btn:active {
+                transform: scale(0.98);
+            }
+
+        /* オーバーレイ */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(0,0,0,0.78);
+            z-index: 9999;
+        }
+
+            .overlay.show {
+                display: flex;
+            }
+
+        .panel {
+            width: min(94vw, 420px);
+            border-radius: 18px;
+            background: rgba(255,255,255,0.10);
+            border: 1px solid rgba(255,255,255,0.18);
+            padding: 16px 14px;
+            text-align: center;
+            color: #fff;
+        }
+
+            .panel h2 {
+                margin: 8px 0 8px;
+                font-size: 18px;
+            }
+
+            .panel p {
+                margin: 0 0 12px;
+                font-size: 14px;
+                opacity: 0.95;
+                line-height: 1.6;
+            }
+
+            .panel .panel-btn {
+                width: 100%;
+                height: 52px;
+                border-radius: 16px;
+                border: 0;
+                background: rgba(255,255,255,0.92);
+                color: #000;
+                font-weight: 1000;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+        /* 復活演出 */
+        .revive-img {
+            width: min(90vw, 380px);
+            height: auto;
+            display: block;
+            margin: 0 auto 10px;
+        }
+
+        /* 画像ボタン共通 */
+        .btn-img {
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .btn-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                display: block;
+            }
+
+        /* 決定ボタン画像 */
+        .btn-confirm-img {
+            padding: 0;
+            background: transparent;
+            border: 0;
+        }
+
+            .btn-confirm-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                display: block;
+            }
+
+
+
+
+
+    </style>
+</head>
+
+<body>
+    <div class="game-wrap">
+
+        <div class="hud">
+            <div class="hud-row">
+                <div>難易度: <strong id="levelText">1</strong></div>
+                <div>スコア: <strong id="scoreText">0</strong></div>
+                <div>残り: <strong id="timeText">--</strong>s</div>
+            </div>
+            <div class="bar"><div id="timeBar"></div></div>
+        </div>
+
+        <div class="prompt-area">
+            <div class="prompt-label">お題</div>
+            <div class="prompt-text" id="promptText">読み込み中…</div>
+            <div class="result" id="resultText"></div>
+        </div>
+
+        <div class="controls">
+            <div class="count-board">
+                <div class="cell"><b>メン</b><span id="cntMen">0</span></div>
+                <div class="cell"><b>ヤサイ</b><span id="cntYasai">0</span></div>
+                <div class="cell"><b>ニンニク</b><span id="cntNinniku">0</span></div>
+                <div class="cell"><b>アブラ</b><span id="cntAbura">0</span></div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-img" id="btnMen" aria-label="メン">
+                    <img src="images/men.png" alt="メン">
+                </button>
+
+                <button class="btn btn-img" id="btnYasai" aria-label="ヤサイ">
+                    <img src="images/yasai.png" alt="ヤサイ">
+                </button>
+
+                <button class="btn btn-img" id="btnNinniku" aria-label="ニンニク">
+                    <img src="images/ninniku.png" alt="ニンニク">
+                </button>
+
+                <button class="btn btn-img" id="btnAbura" aria-label="アブラ">
+                    <img src="images/abura.png" alt="アブラ">
+                </button>
+            </div>
+
+
+            <button class="btn-confirm btn-confirm-img" id="btnConfirm" aria-label="決定">
+                <img src="images/kettei.png" alt="決定">
+            </button>
+
+        </div>
+
+        <div class="bottom-actions">
+            <button class="link-btn" id="btnReset">最初から</button>
+            <button class="link-btn" id="btnBack">トップに戻る</button>
+        </div>
+
+    </div>
+
+    <!-- ゲームオーバー / 復活オーバーレイ -->
+    <div class="overlay" id="overlay">
+        <div class="panel" id="overlayPanel">
+            <img id="reviveImg" class="revive-img" src="images/revive.png" alt="復活演出" style="display:none;">
+            <h2 id="overlayTitle">ゲームオーバー</h2>
+            <p id="overlayDesc">もう一度挑戦しよう！</p>
+            <button class="panel-btn" id="overlayBtn">最初から</button>
+        </div>
+    </div>
+
+    <script>
+        // =========================
+        // 設定
+        // =========================
+        // 復活演出：画像＆セリフ（ランダム）
+        const REVIVE_POOL = [
+            { src: "images/hinana.png", message: "まだまだいけるよ！" },
+            { src: "images/mei.png", message: "ここから巻き返そう！" },
+            { src: "images/ruka.png", message: "落ち着いていけば大丈夫！" },
+        ];
+
+        const REVIVE_SECONDS = 3;
+
+
+        // ===== 効果音 =====
+        // ※スマホ対策で「最初のユーザー操作」で音を解放します
+        let sfxUnlocked = false;
+
+        const SFX = {
+            mash: new Audio("audio/マシ.mp3"),
+            decide: new Audio("audio/決定.mp3"),
+            correct: new Audio("audio/正解.mp3"),
+            gameover: new Audio("audio/ゲームオーバー.mp3"),
+            revive: new Audio("audio/復活.mp3"),
+        };
+
+        // 同時連打に強くする（必要なら少し短めに）
+        for (const k in SFX) {
+            SFX[k].preload = "auto";
+        }
+
+        function unlockSfxOnce() {
+            if (sfxUnlocked) return;
+            sfxUnlocked = true;
+
+            // 無音再生→即停止で “ユーザー操作による再生許可” を取る
+            for (const k in SFX) {
+                try {
+                    SFX[k].muted = true;
+                    const p = SFX[k].play();
+                    if (p && typeof p.then === "function") {
+                        p.then(() => {
+                            SFX[k].pause();
+                            SFX[k].currentTime = 0;
+                            SFX[k].muted = false;
+                        }).catch(() => {
+                            // ここで失敗しても、次のタップで鳴ることが多い
+                            SFX[k].muted = false;
+                        });
+                    } else {
+                        SFX[k].pause();
+                        SFX[k].currentTime = 0;
+                        SFX[k].muted = false;
+                    }
+                } catch (e) { }
+            }
+        }
+
+        function playSfx(key) {
+            const a = SFX[key];
+            if (!a) return;
+            try {
+                a.currentTime = 0;
+                a.play();
+            } catch (e) { }
+        }
+
+        // 画面の最初のタップ/クリックで解放
+        window.addEventListener("pointerdown", unlockSfxOnce, { once: true });
+
+
+
+        const ITEMS = ["メン", "ヤサイ", "ニンニク", "アブラ"]; // ←固定順
+
+        // 難易度ごとの設定（時間だけ変える。maxMashは常に3）
+        const DIFF = [
+            { time: 10 },
+            { time: 9 },
+            { time: 8 },
+            { time: 7 },
+            { time: 6 },
+            { time: 5 },
+        ];
+
+
+        const SCORE_PER_CLEAR = 100;
+
+        // 復活演出（50%）
+        const REVIVE_PROB = 0.5;
+
+        // =========================
+        // 状態
+        // =========================
+        let level = 1;
+        let score = 0;
+        let timeLeft = 0;
+        let timeLimit = 0;
+        let timerId = null;
+
+        let answer = { "メン": 0, "ヤサイ": 0, "ニンニク": 0, "アブラ": 0 };
+        let input = { "メン": 0, "ヤサイ": 0, "ニンニク": 0, "アブラ": 0 };
+
+        // =========================
+        // 要素
+        // =========================
+        const el = {
+            levelText: document.getElementById("levelText"),
+            scoreText: document.getElementById("scoreText"),
+            timeText: document.getElementById("timeText"),
+            timeBar: document.getElementById("timeBar"),
+            promptText: document.getElementById("promptText"),
+            resultText: document.getElementById("resultText"),
+
+            cntMen: document.getElementById("cntMen"),
+            cntYasai: document.getElementById("cntYasai"),
+            cntNinniku: document.getElementById("cntNinniku"),
+            cntAbura: document.getElementById("cntAbura"),
+
+            btnMen: document.getElementById("btnMen"),
+            btnYasai: document.getElementById("btnYasai"),
+            btnNinniku: document.getElementById("btnNinniku"),
+            btnAbura: document.getElementById("btnAbura"),
+            btnConfirm: document.getElementById("btnConfirm"),
+
+            btnReset: document.getElementById("btnReset"),
+            btnBack: document.getElementById("btnBack"),
+
+            overlay: document.getElementById("overlay"),
+            overlayTitle: document.getElementById("overlayTitle"),
+            overlayDesc: document.getElementById("overlayDesc"),
+            overlayBtn: document.getElementById("overlayBtn"),
+            reviveImg: document.getElementById("reviveImg"),
+        };
+
+        // =========================
+        // ユーティリティ
+        // =========================
+        function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+        function getDiff() {
+            // レベルが上がりすぎたら最後の難易度を使う
+            return DIFF[clamp(level - 1, 0, DIFF.length - 1)];
+        }
+
+        function shuffle(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        // =========================
+        // お題生成
+        // =========================
+        // 「全マシ」系の確率（好みで調整）
+        const ALLMASH_PROB = 0.25; // 25%で全マシ系を出す
+
+        function makePrompt() {
+            const maxMash = 3; // ★固定
+
+            // 回答を作る
+            for (const k of ITEMS) {
+                answer[k] = Math.floor(Math.random() * (maxMash + 1)); // 0..3
+            }
+
+            // たまに「全マシ」「全マシマシ」「全マシマシマシ」を出す
+            const useAllMash = Math.random() < ALLMASH_PROB;
+
+            if (useAllMash) {
+                const n = 1 + Math.floor(Math.random() * 3); // 1..3
+                const s = "全" + "マシ".repeat(n);
+
+                // 全具材が同じ回数になる
+                for (const k of ITEMS) answer[k] = n;
+
+                el.promptText.textContent = s;
+                return;
+            }
+
+            // 通常お題（並び固定：メン→ヤサイ→ニンニク→アブラ）
+            let s = "";
+            for (const item of ITEMS) {
+                s += item;
+                s += "マシ".repeat(answer[item]);
+            }
+            el.promptText.textContent = s;
+        }
+
+
+        // =========================
+        // 入力表示
+        // =========================
+        function renderHUD() {
+            el.levelText.textContent = String(level);
+            el.scoreText.textContent = String(score);
+            el.timeText.textContent = String(Math.max(0, Math.ceil(timeLeft)));
+
+            const ratio = timeLimit > 0 ? (timeLeft / timeLimit) : 0;
+            el.timeBar.style.transform = `scaleX(${clamp(ratio, 0, 1)})`;
+        }
+
+        function renderCounts() {
+            el.cntMen.textContent = input["メン"];
+            el.cntYasai.textContent = input["ヤサイ"];
+            el.cntNinniku.textContent = input["ニンニク"];
+            el.cntAbura.textContent = input["アブラ"];
+        }
+
+        function resetInput() {
+            for (const k of ITEMS) input[k] = 0;
+            renderCounts();
+        }
+
+        // =========================
+        // タイマー
+        // =========================
+        function stopTimer() {
+            if (timerId) {
+                clearInterval(timerId);
+                timerId = null;
+            }
+        }
+
+        function startTimer() {
+            stopTimer();
+            const { time } = getDiff();
+            timeLimit = time;
+            timeLeft = time;
+
+            const start = performance.now();
+            timerId = setInterval(() => {
+                const now = performance.now();
+                const elapsed = (now - start) / 1000;
+                timeLeft = timeLimit - elapsed;
+
+                renderHUD();
+
+                if (timeLeft <= 0) {
+                    stopTimer();
+                    gameOver();
+
+                }
+            }, 50);
+
+            renderHUD();
+        }
+
+        // =========================
+        // 判定
+        // =========================
+        function checkAnswer() {
+            for (const k of ITEMS) {
+                if (input[k] !== answer[k]) return false;
+            }
+            return true;
+        }
+
+        // =========================
+        // ゲーム進行
+        // =========================
+        function nextRound() {
+            el.resultText.textContent = "";
+            resetInput();
+            makePrompt();
+            startTimer();
+        }
+
+        function correct() {
+            playSfx("correct"); // ★追加
+            stopTimer();
+            el.resultText.textContent = "〇";
+            score += SCORE_PER_CLEAR * level;
+
+            // クリアするほど難易度UP（毎回+1）
+            level += 1;
+
+            renderHUD();
+
+            // 少しだけ見せてから次へ
+            setTimeout(() => nextRound(), 450);
+        }
+
+        function gameOver() {
+            el.resultText.textContent = "×";
+
+            const canRevive = Math.random() < REVIVE_PROB;
+
+            if (canRevive) {
+                showRevive();
+            } else {
+                showGameOver();
+            }
+        }
+
+
+        function showOverlay(title, desc, btnText, onBtn) {
+            el.overlayTitle.textContent = title;
+            el.overlayDesc.textContent = desc;
+            el.overlayBtn.textContent = btnText;
+
+            el.overlayBtn.onclick = () => {
+                el.overlay.classList.remove("show");
+                onBtn?.();
+            };
+
+            el.overlay.classList.add("show");
+        }
+
+        function showRevive() {
+            playSfx("revive"); // ★追加
+            const pick = REVIVE_POOL[Math.floor(Math.random() * REVIVE_POOL.length)];
+
+            el.reviveImg.src = pick.src;
+            el.reviveImg.style.display = "block";
+
+            let t = REVIVE_SECONDS;
+
+            // タイトルを“キャラ台詞”に置き換える
+            el.overlayTitle.textContent = pick.message;
+            el.overlayBtn.textContent = "復活中…";
+            el.overlayBtn.disabled = true;
+
+            const render = () => {
+                el.overlayDesc.textContent = `復活まで ${t}…`;
+            };
+
+            render();
+            el.overlay.classList.add("show");
+
+            const id = setInterval(() => {
+                t -= 1;
+                if (t <= 0) {
+                    clearInterval(id);
+                    el.overlay.classList.remove("show");
+                    el.overlayBtn.disabled = false;
+                    nextRound();
+                    return;
+                }
+                render();
+            }, 1000);
+        }
+
+
+
+
+        function showGameOver() {
+            playSfx("gameover"); // ★追加
+            el.reviveImg.style.display = "none";
+            showOverlay(
+                "ゲームオーバー",
+                `スコア: ${score}\n難易度: ${level}`,
+                "最初から",
+                () => startGame()
+            );
+        }
+
+
+        function startGame() {
+            stopTimer();
+            level = 1;
+            score = 0;
+            renderHUD();
+            nextRound();
+        }
+
+        // =========================
+        // 入力（ボタン）
+        // =========================
+        function inc(item) {
+            const maxMash = 3; // ★固定
+            input[item] = input[item] + 1;
+            if (input[item] > maxMash) input[item] = 0; // 0→1→2→3→0
+            renderCounts();
+            playSfx("mash"); // ★追加
+        }
+
+
+        el.btnMen.addEventListener("click", () => inc("メン"));
+        el.btnYasai.addEventListener("click", () => inc("ヤサイ"));
+        el.btnNinniku.addEventListener("click", () => inc("ニンニク"));
+        el.btnAbura.addEventListener("click", () => inc("アブラ"));
+
+        el.btnConfirm.addEventListener("click", () => {
+            playSfx("decide"); // ★追加
+            // 決定を押した瞬間にタイマー止めて判定（フェアに）
+            stopTimer();
+            const ok = checkAnswer();
+            if (ok) correct();
+            else gameOver();
+        });
+
+        el.btnReset.addEventListener("click", () => startGame());
+        el.btnBack.addEventListener("click", () => { window.location.href = "index.html"; });
+
+        // =========================
+        // Xシェア（任意：ここでゲームスコアをシェアしたいなら拡張できます）
+        // =========================
+
+        // 起動
+        startGame();
+    </script>
+</body>
+</html>
