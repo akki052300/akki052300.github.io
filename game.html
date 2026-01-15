@@ -12,8 +12,9 @@
         /* game専用の上書き（サイトCSSと競合しないようにスコープ強め） */
         body {
             margin: 0;
-            background: #000;
+            background: linear-gradient(#dff6ff, #bfeaff);
         }
+
 
         .game-wrap {
             min-height: 100vh;
@@ -46,13 +47,24 @@
                 font-size: 14px;
             }
 
+        /* 残り時間バー（見やすい版） */
         .bar {
             margin-top: 10px;
-            height: 10px;
-            background: rgba(255,255,255,0.12);
+            height: 12px;
+            background: rgba(0,0,0,0.08); /* 土台を少し濃く */
+            border: 1px solid rgba(0,0,0,0.12); /* 枠線 */
             border-radius: 999px;
             overflow: hidden;
         }
+
+            .bar > div {
+                height: 100%;
+                width: 100%;
+                background: rgba(0,160,255,0.85); /* 水色系で濃く */
+                transform-origin: left center;
+                transform: scaleX(1);
+            }
+
 
             .bar > div {
                 height: 100%;
@@ -119,14 +131,17 @@
         }
 
             .count-board .cell {
-                background: rgba(0,0,0,0.25);
-                border: 1px solid rgba(255,255,255,0.14);
-                border-radius: 12px;
+                background: linear-gradient(#e6f7ff, #cceeff);
+                border: 1px solid rgba(0,140,220,0.35);
+                border-radius: 14px;
                 padding: 10px 10px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                color: #045d9a; /* 文字色も水色寄りに */
+                box-shadow: 0 4px 10px rgba(0,120,200,0.15);
             }
+
 
                 .count-board .cell b {
                     font-size: 14px;
@@ -291,6 +306,66 @@
             }
 
 
+        .side-chara {
+            display: flex;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+        .question-chara-side {
+            width: 110px;
+            height: auto;
+            flex-shrink: 0;
+            filter: drop-shadow(0 6px 10px rgba(0,0,0,0.4));
+        }
+
+        .prompt-text-wrap {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .prompt-sub {
+            margin-top: 6px;
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        /* 正解時ジャンプ */
+        .jump-once {
+            animation: charaJump 420ms cubic-bezier(.2,.9,.2,1) 1;
+        }
+
+        @keyframes charaJump {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            35% {
+                transform: translateY(-18px) scale(1.02);
+            }
+
+            70% {
+                transform: translateY(0) scale(0.99);
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .prompt-area,
+        .controls,
+        .hud {
+            background: rgba(255,255,255,0.85);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .game-wrap {
+            color: #333;
+        }
+
+
 
 
 
@@ -310,10 +385,22 @@
         </div>
 
         <div class="prompt-area">
-            <div class="prompt-label">お題</div>
-            <div class="prompt-text" id="promptText">読み込み中…</div>
+
+            <div class="prompt-head side-chara">
+                <img id="questionChara" src="images/tenra-men.png" class="question-chara-side" alt="出題キャラ">
+
+
+                <div class="prompt-text-wrap">
+                    <div class="prompt-label">てんの注文</div>
+                    <div class="prompt-text" id="promptText">読み込み中…</div>
+                </div>
+            </div>
+
             <div class="result" id="resultText"></div>
         </div>
+
+
+
 
         <div class="controls">
             <div class="count-board">
@@ -365,75 +452,101 @@
         </div>
     </div>
 
+    <!-- ルール説明モーダル -->
+    <div class="overlay" id="ruleOverlay">
+        <div class="panel">
+            <h2>遊び方</h2>
+            <p id="ruleText">
+                てんちゃんの注文通りにラーメンを作ろう！<br>
+                表示された「マシ」の数だけ各具材ボタンを押して、<br>
+                最後に決定を押してね。<br>
+                間違えたり、時間切れになるとゲームオーバーだよ。<br>
+                正解するほど制限時間が短くなるから要注意！<br>
+                がんばって高得点を目指そう！<br>
+                もしゲームオーバーになっても<br>
+                はくchu♡むのメンバーが助けてくれることがあるかも…？
+            </p>
+            <button class="panel-btn" id="ruleStartBtn">スタート！</button>
+        </div>
+    </div>
+
+
     <script>
         // =========================
         // 設定
         // =========================
         // 復活演出：画像＆セリフ（ランダム）
         const REVIVE_POOL = [
-            { src: "images/hinana.PNG", message: "まだまだいけるよ！" },
-            { src: "images/mei.PNG", message: "ここから巻き返そう！" },
-            { src: "images/ruka.PNG", message: "落ち着いていけば大丈夫！" },
+            { src: "images/hinana.png", message: "まだまだいけるよ！", size: 240 },
+            { src: "images/mei.png", message: "ここから巻き返すよ！", size: 200 },
+            { src: "images/ruka.png", message: "落ち着いていけば大丈夫！", size: 200 },
         ];
+
 
         const REVIVE_SECONDS = 3;
 
 
+
         // ===== 効果音 =====
         // ※スマホ対策で「最初のユーザー操作」で音を解放します
+        // ===== 効果音（連打に強い：プール方式）=====
         let sfxUnlocked = false;
 
-        const SFX = {
-            mash: new Audio("audio/マシ.mp3"),
-            decide: new Audio("audio/決定.mp3"),
-            correct: new Audio("audio/正解.mp3"),
-            gameover: new Audio("audio/ゲームオーバー.mp3"),
-            revive: new Audio("audio/復活.mp3"),
-        };
-
-        // 同時連打に強くする（必要なら少し短めに）
-        for (const k in SFX) {
-            SFX[k].preload = "auto";
+        function makePool(src, size = 4) {
+            const pool = Array.from({ length: size }, () => {
+                const a = new Audio(src);
+                a.preload = "auto";
+                return a;
+            });
+            return { pool, i: 0 };
         }
+
+        const SFX = {
+            mash: makePool("audio/マシ.mp3", 6),   // 連打が多いので多め
+            decide: makePool("audio/決定.mp3", 3),
+            correct: makePool("audio/正解.mp3", 3),
+            gameover: makePool("audio/ゲームオーバー.mp3", 2),
+            revive: makePool("audio/復活.mp3", 2),
+        };
 
         function unlockSfxOnce() {
             if (sfxUnlocked) return;
             sfxUnlocked = true;
 
-            // 無音再生→即停止で “ユーザー操作による再生許可” を取る
-            for (const k in SFX) {
-                try {
-                    SFX[k].muted = true;
-                    const p = SFX[k].play();
-                    if (p && typeof p.then === "function") {
-                        p.then(() => {
-                            SFX[k].pause();
-                            SFX[k].currentTime = 0;
-                            SFX[k].muted = false;
-                        }).catch(() => {
-                            // ここで失敗しても、次のタップで鳴ることが多い
-                            SFX[k].muted = false;
-                        });
-                    } else {
-                        SFX[k].pause();
-                        SFX[k].currentTime = 0;
-                        SFX[k].muted = false;
-                    }
-                } catch (e) { }
+            // “ユーザー操作で一度再生した”扱いにする（スマホ対策）
+            for (const key in SFX) {
+                for (const a of SFX[key].pool) {
+                    try {
+                        a.muted = true;
+                        const p = a.play();
+                        if (p && typeof p.then === "function") {
+                            p.then(() => {
+                                a.pause(); a.currentTime = 0; a.muted = false;
+                            }).catch(() => { a.muted = false; });
+                        } else {
+                            a.pause(); a.currentTime = 0; a.muted = false;
+                        }
+                    } catch (e) { }
+                }
             }
         }
 
         function playSfx(key) {
-            const a = SFX[key];
-            if (!a) return;
+            const s = SFX[key];
+            if (!s) return;
+
+            const a = s.pool[s.i];
+            s.i = (s.i + 1) % s.pool.length;
+
             try {
                 a.currentTime = 0;
                 a.play();
             } catch (e) { }
         }
 
-        // 画面の最初のタップ/クリックで解放
+        // 最初のユーザー操作で解放
         window.addEventListener("pointerdown", unlockSfxOnce, { once: true });
+
 
 
 
@@ -638,6 +751,16 @@
             playSfx("correct"); // ★追加
             stopTimer();
             el.resultText.textContent = "〇";
+
+            // 正解ジャンプ
+            const chara = document.getElementById("questionChara");
+            if (chara) {
+                chara.classList.remove("jump-once"); // 連続正解でも毎回発火させる
+                void chara.offsetWidth;             // ← リフローで再発火
+                chara.classList.add("jump-once");
+            }
+
+
             score += SCORE_PER_CLEAR * level;
 
             // クリアするほど難易度UP（毎回+1）
@@ -680,6 +803,8 @@
             const pick = REVIVE_POOL[Math.floor(Math.random() * REVIVE_POOL.length)];
 
             el.reviveImg.src = pick.src;
+            el.reviveImg.style.width = pick.size + "px";   // ★ここ
+            el.reviveImg.style.maxWidth = "90vw";
             el.reviveImg.style.display = "block";
 
             let t = REVIVE_SECONDS;
@@ -724,6 +849,20 @@
         }
 
 
+        function showRule() {
+            document.getElementById("ruleOverlay").classList.add("show");
+        }
+
+        document.getElementById("ruleStartBtn").addEventListener("click", () => {
+            document.getElementById("ruleOverlay").classList.remove("show");
+            startGame();
+        });
+
+
+
+
+
+
         function startGame() {
             stopTimer();
             level = 1;
@@ -766,7 +905,8 @@
         // =========================
 
         // 起動
-        startGame();
+        showRule();
+
     </script>
 </body>
 </html>
