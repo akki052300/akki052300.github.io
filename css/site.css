@@ -67,7 +67,7 @@ body {
 
 /* アイドル写真 */
 .idol-photo {
-    width: 150%;
+    width: 135%;
     display: block;
 }
 
@@ -133,7 +133,7 @@ body {
     position: absolute;
     top: 90%;
     left: 50%;
-    width: 150%;
+    width: 135%;
     margin-left: 70px;
     height: auto;
     display: block;
@@ -272,7 +272,7 @@ body.modal-open {
     }
 
 .game-btn img {
-    width: 140px; /* 好み */
+    width: 250px; /* 好み */
     margin: 0 auto;
 }
 
