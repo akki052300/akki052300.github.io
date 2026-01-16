@@ -889,13 +889,20 @@
         el.btnAbura.addEventListener("click", () => inc("アブラ"));
 
         el.btnConfirm.addEventListener("click", () => {
-            playSfx("decide"); // ★追加
-            // 決定を押した瞬間にタイマー止めて判定（フェアに）
+            playSfx("decide");
+
             stopTimer();
             const ok = checkAnswer();
+
+            if (ok) playSfx("correct");   // ← 正解音をここで鳴らす（確実）
+            else {
+                // ここは復活抽選の結果で鳴らし分けするならこのまま
+            }
+
             if (ok) correct();
             else gameOver();
         });
+
 
         el.btnReset.addEventListener("click", () => startGame());
         el.btnBack.addEventListener("click", () => { window.location.href = "index.html"; });
