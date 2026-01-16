@@ -61,8 +61,8 @@ window.addEventListener("load", () => {
     const a = document.getElementById("shareX");
     if (!a) return;
 
-    const text = "生誕ワンマンライブ開催決定！シェアして応援しよう！";
-    const hashtags = "うるうてん生誕祭2026";
+    const text = "生誕ワンマンライブ開催決定！シェアして応援しよう！\n";
+    const hashtags = "\nうるうてん生誕祭2026";
 
     const url = new URL("https://twitter.com/intent/tweet");
     url.searchParams.set("text", text);
