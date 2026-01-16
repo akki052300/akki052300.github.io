@@ -834,6 +834,13 @@
             }, 1000);
         }
 
+        let lastMashAt = 0;
+        function playMash() {
+            const now = performance.now();
+            if (now - lastMashAt < 60) return; // 60ms未満は鳴らさない
+            lastMashAt = now;
+            playSfx("mash");
+        }
 
 
 
