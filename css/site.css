@@ -21,8 +21,8 @@ body {
 
 /* 情報カード（丸枠） */
 .info-card {
-    width: 80%;
-    max-width: 300px;
+    width: 83%;
+    max-width: 310px;
     margin: 20px auto 20px;
     padding: 20px;
     background: rgba(255, 255, 255, 0.85);
@@ -62,7 +62,7 @@ body {
     position: relative;
     width: 100%;
     max-width: 360px;
-    margin-right: 65px;
+    margin-right: 50px;
 }
 
 /* アイドル写真 */
