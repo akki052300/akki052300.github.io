@@ -55,20 +55,19 @@
 });
 
 
-
-
 window.addEventListener("load", () => {
     const a = document.getElementById("shareX");
     if (!a) return;
 
     const shareText =
         "生誕ワンマンライブ開催決定！シェアして応援しよう！\n" +
-        "#うるうてん生誕祭2026";
+        "#うるうてん生誕祭2026\n";
 
-    const url = new URL("https://twitter.com/intent/tweet"); // ← 改行なし！
+    const url = new URL("https://twitter.com/intent/tweet");
     url.searchParams.set("text", shareText);
-    url.searchParams.set("url", window.location.href);
+    url.searchParams.set("url", "https://akki052300.github.io/"); // 固定推奨
 
     a.href = url.toString();
 });
+
 
