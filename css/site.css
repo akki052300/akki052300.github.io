@@ -62,7 +62,7 @@ body {
     position: relative;
     width: 100%;
     max-width: 360px;
-    margin-right: 50px;
+    margin-right: 45px;
 }
 
 /* アイドル写真 */
@@ -134,7 +134,7 @@ body {
     top: 90%;
     left: 50%;
     width: 103%;
-    margin-left: 30px;
+    margin-left: 28px;
     height: auto;
     display: block;
     pointer-events: none;
