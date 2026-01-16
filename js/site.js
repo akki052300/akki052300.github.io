@@ -61,13 +61,14 @@ window.addEventListener("load", () => {
     const a = document.getElementById("shareX");
     if (!a) return;
 
-    const text = "生誕ワンマンライブ開催決定！シェアして応援しよう！\n";
-    const hashtags = "うるうてん生誕祭2026";
+    const shareText =
+        "生誕ワンマンライブ開催決定！シェアして応援しよう！\n" +
+        "#うるうてん生誕祭2026";
 
-    const url = new URL("https://twitter.com/intent/tweet\n");
-    url.searchParams.set("text", text);
+    const url = new URL("https://twitter.com/intent/tweet"); // ← 改行なし！
+    url.searchParams.set("text", shareText);
     url.searchParams.set("url", window.location.href);
-    url.searchParams.set("hashtags", hashtags);
 
     a.href = url.toString();
 });
+
